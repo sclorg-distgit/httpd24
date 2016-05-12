@@ -6,16 +6,21 @@
 # do not produce empty debuginfo package
 %global debug_package %{nil}
 
+%if 0%{?rhel} >= 7
 %define use_system_apr 1
+%else
+%define use_system_apr 0
+%endif
 
 Summary:       Package that installs %scl
 Name:          %scl_name
 Version:       1.1
-Release:       9%{?dist}
+Release:       12%{?dist}
 License:       GPLv2+
 Group: Applications/File
 Source0: README
 Source1: LICENSE
+Source2: README.7
 
 BuildRoot:     %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires: scl-utils-build
@@ -23,7 +28,21 @@ BuildRequires: scl-utils-build
 BuildRequires: iso-codes
 BuildRequires: help2man
 
-%if ! %{use_system_apr}
+%if %{use_system_apr}
+# Remove httpd24-apr and httpd24-apr-util from system.
+# https://bugzilla.redhat.com/show_bug.cgi?id=1088194
+Obsoletes: %{scl_prefix}apr
+Obsoletes: %{scl_prefix}apr-devel
+Obsoletes: %{scl_prefix}apr-util
+Obsoletes: %{scl_prefix}apr-util-devel
+Obsoletes: %{scl_prefix}apr-util-pgsql
+Obsoletes: %{scl_prefix}apr-util-mysql
+Obsoletes: %{scl_prefix}apr-util-sqlite
+Obsoletes: %{scl_prefix}apr-util-odbc
+Obsoletes: %{scl_prefix}apr-util-ldap
+Obsoletes: %{scl_prefix}apr-util-openssl
+Obsoletes: %{scl_prefix}apr-util-nss
+%else
 Requires: %{scl_prefix}apr
 Requires: %{scl_prefix}apr-util
 %endif
@@ -36,19 +55,6 @@ This is the main package for %scl Software Collection.
 Summary:   Package that handles %scl Software Collection.
 Requires:  scl-utils
 Requires(post): policycoreutils-python
-# Remove httpd24-apr and httpd24-apr-util from system.
-# https://bugzilla.redhat.com/show_bug.cgi?id=1088194
-Obsoletes: %{scl_prefix}apr <= 1.5.1-1%{?dist}
-Obsoletes: %{scl_prefix}apr-devel <= 1.5.1-1%{?dist}
-Obsoletes: %{scl_prefix}apr-util <= 1.5.4-1%{?dist}
-Obsoletes: %{scl_prefix}apr-util-devel <= 1.5.4-1%{?dist}
-Obsoletes: %{scl_prefix}apr-util-pgsql <= 1.5.4-1%{?dist}
-Obsoletes: %{scl_prefix}apr-util-mysql <= 1.5.4-1%{?dist}
-Obsoletes: %{scl_prefix}apr-util-sqlite <= 1.5.4-1%{?dist}
-Obsoletes: %{scl_prefix}apr-util-odbc <= 1.5.4-1%{?dist}
-Obsoletes: %{scl_prefix}apr-util-ldap <= 1.5.4-1%{?dist}
-Obsoletes: %{scl_prefix}apr-util-openssl <= 1.5.4-1%{?dist}
-Obsoletes: %{scl_prefix}apr-util-nss <= 1.5.4-1%{?dist}
 
 %description runtime
 Package shipping essential scripts to work with %scl Software Collection.
@@ -71,23 +77,25 @@ packages depending on %scl Software Collection.
 %prep
 %setup -c -T
 
-# This section generates README file from a template and creates man page
-# from that file, expanding RPM macros in the template file.
-cat >README <<'EOF'
-%{expand:%(cat %{SOURCE0})}
-EOF
-
 # copy the license file so %%files section sees it
+cp %{SOURCE0} .
 cp %{SOURCE1} .
+cp %{SOURCE2} .
 
-# Not required for now
-#export LIBRARY_PATH=%{_libdir}\${LIBRARY_PATH:+:\${LIBRARY_PATH}}
-#export LD_LIBRARY_PATH=%{_libdir}\${LD_LIBRARY_PATH:+:\${LD_LIBRARY_PATH}}
+sed -i 's|%%{scl_name}|%{scl_name}|g' README.7
+sed -i 's|%%{_scl_root}|%{_scl_root}|g' README.7
+sed -i 's|%%{version}|%{version}|g' README.7
+
+sed -i 's|%%{scl_name}|%{scl_name}|g' README
+sed -i 's|%%{_scl_root}|%{_scl_root}|g' README
+sed -i 's|%%{version}|%{version}|g' README
 
 cat <<EOF | tee enable
 export PATH=%{_bindir}:%{_sbindir}\${PATH:+:\${PATH}}
 export MANPATH=%{_mandir}:\${MANPATH}
 export PKG_CONFIG_PATH=%{_libdir}/pkgconfig\${PKG_CONFIG_PATH:+:\${PKG_CONFIG_PATH}}
+export LIBRARY_PATH=%{_libdir}\${LIBRARY_PATH:+:\${LIBRARY_PATH}}
+export LD_LIBRARY_PATH=%{_libdir}\${LD_LIBRARY_PATH:+:\${LD_LIBRARY_PATH}}
 EOF
 
 # generate rpm macros file for depended collections
@@ -113,13 +121,14 @@ mkdir -p %{buildroot}%{_scl_scripts}/root
 install -m 644 enable  %{buildroot}%{_scl_scripts}/enable
 install -D -m 644 scldev %{buildroot}%{_root_sysconfdir}/rpm/macros.%{scl_name_base}-scldevel
 
-# install generated man page
-mkdir -p %{buildroot}%{_mandir}/man1/
-mkdir -p %{buildroot}%{_mandir}/man7/
-mkdir -p %{buildroot}%{_mandir}/man8/
+# All directories used must be owned
+mkdir -p %{buildroot}%{_mandir}/man{1,3,7,8}/
 mkdir -p %{buildroot}%{_libdir}/pkgconfig/
 mkdir -p %{buildroot}%{_datadir}/aclocal/
-install -m 644 %{scl_name}.7 %{buildroot}%{_mandir}/man7/%{scl_name}.7
+mkdir -p %{buildroot}%{_datadir}/zsh/
+mkdir -p %{buildroot}%{_datadir}/licenses/
+
+install -m 644 README.7 %{buildroot}%{_mandir}/man7/%{scl_name}.7
 
 %scl_install
 
@@ -141,7 +150,6 @@ EOF
 # have its own policy for collection
 semanage fcontext -a -e / %{_scl_root} >/dev/null 2>&1 || :
 restorecon -R %{_scl_root} >/dev/null 2>&1 || :
-selinuxenabled && load_policy || :
 
 %files
 
@@ -149,13 +157,12 @@ selinuxenabled && load_policy || :
 %defattr(-,root,root)
 %doc README LICENSE
 %scl_files
-%dir %{_mandir}/man1
-%dir %{_mandir}/man7
-%dir %{_mandir}/man8
+%dir %{_mandir}/man?
 %dir %{_libdir}/pkgconfig
 %dir %{_datadir}/aclocal
+%dir %{_datadir}/licenses
+%dir %{_datadir}/zsh
 %{_mandir}/man7/%{scl_name}.*
-
 %config(noreplace) %{_scl_scripts}/service-environment
 
 %files build
@@ -167,14 +174,22 @@ selinuxenabled && load_policy || :
 %{_root_sysconfdir}/rpm/macros.%{scl_name_base}-scldevel
 
 %changelog
-* Tue Feb 03 2015 Jan Kaluza <jkaluza@redhat.com> - 1.1.9
-- use httpd24-apr and httpd24-apr-util from system on RHEL7 (#1187646)
+* Thu Apr 14 2016 Joe Orton <jorton@redhat.com> - 1.1-12
+- own more directories (#1319968)
 
-* Mon Feb 02 2015 Jan Kaluza <jkaluza@redhat.com> - 1.1.8
-- use httpd24-apr and httpd24-apr-util even on RHEL7 (#1187646)
+* Wed Feb 10 2016 Jan Kaluza <jkaluza@redhat.com> - 1.1-11
+- bump the release to match the RHEL6 version of httpd24
 
-* Mon Jan 05 2015 Jan Kaluza <jkaluza@redhat.com> - 1.1-7
-- obsolete httpd24-apr and http24-apr-util (#1088194)
+* Wed Feb 10 2016 Jan Kaluza <jkaluza@redhat.com> - 1.1-7
+- Obsolete all versions of httpd24-apr and httpd24-apr-util on RHEL7 (#1218271)
+- Do not mention RHSCL version in README and man page (#1219112)
+- Fix bad man page syntax (#1219511)
+
+* Tue Feb 09 2016 Jan Kaluza <jkaluza@redhat.com> - 1.1-6
+- use LD_LIBRARY_PATH in enable script
+
+* Wed Jan 28 2015 Jan Kaluza <jkaluza@redhat.com> 1.1-5
+- rebuild for rhscl-2.0
 
 * Mon Mar 31 2014 Honza Horak <hhorak@redhat.com> - 1.1-4
 - Fix path typo in README
@@ -189,17 +204,11 @@ selinuxenabled && load_policy || :
 * Wed Feb 12 2014 Jan Kaluza <jkaluza@redhat.com> - 1.1-1
 - add README and LICENSE (#1061446)
 
-* Mon Jan 20 2014 Jan Kaluza <jkaluza@redhat.com> - 1.10
-- rebuild because of missing uucp user (#1054719)
+* Wed Jan 15 2014 Jan Kaluza <jkaluza@redhat.com> - 1.8
+- add policycoreutils-python dependency (#1052933)
 
-* Wed Jan 15 2014 Jan Kaluza <jkaluza@redhat.com> - 1.9
-- execute load_policy to load newly created SELinux policy (#1052935)
-
-* Tue Nov 12 2013 Jan Kaluza <jkaluza@redhat.com> - 1.8
+* Tue Nov 12 2013 Jan Kaluza <jkaluza@redhat.com> - 1.7
 - add service-environment config file
-
-* Wed Sep 25 2013 Jan Kaluza <jkaluza@redhat.com> - 1.7
-- use system APR/APR-util
 
 * Fri Sep 20 2013 Jan Kaluza <jkaluza@redhat.com> - 1.6
 - add prep section and cleanup spec file
