@@ -1,6 +1,6 @@
-.TH %{scl_name} "7" "" "%{scl_name} %{version} Software Collection" "User Commands"
+.TH %{scl_name} "7" "" "%{scl_name} Software Collection" "User Commands"
 .SH NAME
-%{scl_name} \- manual page for %{scl_name} %{version} Software Collection
+%{scl_name} \- manual page for %{scl_name} Software Collection
 .SH SYNOPSIS
 .B scl
 \fIenable %{scl_name} \[aq]httpd\[aq]\fR
@@ -8,20 +8,16 @@
 .B service
 \f%{scl_name}-httpd start\fR
 .SH DESCRIPTION
-Package %{scl_name} provides Nginx web server as a Software
+Package %{scl_name} provides Apache httpd web server as a Software
 Collection. For more information about Software Collections,
 see the \fIscl\fR(1) man page. By installing the %{scl_name} collection,
-you will get the minimum working set of packages to have a working Perl Nginx
+you will get the minimum working set of packages to have a working Apache httpd
 web-server.
 .PP
 Software Collections allows use of applications which are not located
 in the filesystem root hierarchy but are present in an alternative
 location, which is \fI%{_scl_root}\fR in case of the %{scl_name}
 collection.
-.PP
-Nginx is a web server and a reverse proxy server for HTTP, SMTP, POP3 and
-IMAP protocols, with a strong focus on high concurrency, performance and low
-memory usage.
 .PP
 When you want to work with the %{scl_name} collection, use the \fBscl\fR
 utility (see the \fIscl\fR(1) man page for usage) to enable the scl

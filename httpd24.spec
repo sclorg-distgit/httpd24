@@ -15,7 +15,7 @@
 Summary:       Package that installs %scl
 Name:          %scl_name
 Version:       1.1
-Release:       12%{?dist}
+Release:       13%{?dist}
 License:       GPLv2+
 Group: Applications/File
 Source0: README
@@ -174,6 +174,9 @@ restorecon -R %{_scl_root} >/dev/null 2>&1 || :
 %{_root_sysconfdir}/rpm/macros.%{scl_name_base}-scldevel
 
 %changelog
+* Fri May 06 2016 Jan Kaluza <jkaluza@redhat.com> - 1.1-13
+- Resolves:#1219112 - fix nginx mentions in the man page
+
 * Thu Apr 14 2016 Joe Orton <jorton@redhat.com> - 1.1-12
 - own more directories (#1319968)
 
