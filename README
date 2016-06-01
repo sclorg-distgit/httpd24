@@ -1,30 +1,27 @@
 NAME
-       %{scl_name}  -  manual page for %{scl_name} Software Collec‐
-       tion
+       %{scl_name}  -  manual page for %{scl_name} Software Collection
 
 SYNOPSIS
-       scl enable %{scl_name} 'httpd'
-
-       service {scl_name}-httpd start
+       %{start_command}
 
 DESCRIPTION
        Package %{scl_name} provides Apache httpd web server as a Software Collection.
        For  more  information  about  Software Collections, see the scl(1) man
-       page. By installing the %{scl_name} collection, you will get the	 mini‐
-       mum working set of packages to have a working Apache httpd web server.
+       page. By installing the %{scl_name} collection, you will get the minimum
+       working set of packages to have a working Apache httpd web server.
 
        Software	 Collections  allows use of applications which are not located
        in the filesystem root hierarchy but  are  present  in  an  alternative
        location, which is %{_scl_root} in case of the %{scl_name} collection.
 
-       When  you  want	to  work  with the %{scl_name} collection, use the scl
+       When  you  want to  work  with the %{scl_name} collection, use the scl
        utility (see the scl(1) man page for usage) to enable the scl  environ‐
        ment.
 
 EXAMPLES
        scl enable %{scl_name} 'command --arg'
 
-	      Run  a  specific	command  with  the	 argument  --arg within the
+	      Run  a  specific command  with  the argument  --arg within the
 	      %{scl_name} software collections environment.
 
        scl enable %{scl_name} bash
@@ -34,7 +31,7 @@ EXAMPLES
 
        scl enable %{scl_name} 'man httpd'
 
-	      Show man pages for the httpd command, which is  a	 part  of  the
+	      Show man pages for the httpd command, which is  a part  of  the
 	      %{scl_name} software collection.
 
 REPORTING BUGS
