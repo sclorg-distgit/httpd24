@@ -15,7 +15,7 @@
 Summary:       Package that installs %scl
 Name:          %scl_name
 Version:       1.1
-Release:       13%{?dist}
+Release:       14%{?dist}
 License:       GPLv2+
 Group: Applications/File
 Source0: README
@@ -82,13 +82,19 @@ cp %{SOURCE0} .
 cp %{SOURCE1} .
 cp %{SOURCE2} .
 
-sed -i 's|%%{scl_name}|%{scl_name}|g' README.7
-sed -i 's|%%{_scl_root}|%{_scl_root}|g' README.7
-sed -i 's|%%{version}|%{version}|g' README.7
+expand_variables() {
+    sed -i 's|%%{scl_name}|%{scl_name}|g' "$1"
+    sed -i 's|%%{_scl_root}|%{_scl_root}|g' "$1"
+    sed -i 's|%%{version}|%{version}|g' "$1"
+%if 0%{?rhel} > 6
+    sed -i 's|%%{start_command}|systemctl start %{scl_name}-httpd|g' "$1"
+%else
+    sed -i 's|%%{start_command}|service %{scl_name}-httpd start|g' "$1"
+%endif
+}
 
-sed -i 's|%%{scl_name}|%{scl_name}|g' README
-sed -i 's|%%{_scl_root}|%{_scl_root}|g' README
-sed -i 's|%%{version}|%{version}|g' README
+expand_variables README.7
+expand_variables README
 
 cat <<EOF | tee enable
 export PATH=%{_bindir}:%{_sbindir}\${PATH:+:\${PATH}}
@@ -105,16 +111,6 @@ cat << EOF | tee scldev
 EOF
 
 %build
-# generate a helper script that will be used by help2man
-cat >h2m_helper <<'EOF'
-#!/bin/bash
-[ "$1" == "--version" ] && echo "%{scl_name} %{version} Software Collection" || cat README
-EOF
-chmod a+x h2m_helper
-
-# generate the man page
-help2man -N --section 7 ./h2m_helper -o %{scl_name}.7
-
 
 %install
 mkdir -p %{buildroot}%{_scl_scripts}/root
@@ -174,6 +170,9 @@ restorecon -R %{_scl_root} >/dev/null 2>&1 || :
 %{_root_sysconfdir}/rpm/macros.%{scl_name_base}-scldevel
 
 %changelog
+* Fri May 06 2016 Jan Kaluza <jkaluza@redhat.com> - 1.1-14
+- Resolves:#1219112 - fix error in man page
+
 * Fri May 06 2016 Jan Kaluza <jkaluza@redhat.com> - 1.1-13
 - Resolves:#1219112 - fix nginx mentions in the man page
 
