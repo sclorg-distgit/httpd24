@@ -1,0 +1,8 @@
+%scl_package_override() %{expand:
+  %{?_@SCL@_mmn:       %global _httpd_mmn        %_@SCL@_mmn}
+  %{?_@SCL@_apxs:      %global _httpd_apxs       %_@SCL@_apxs}
+  %{?_@SCL@_moddir:    %global _httpd_moddir     %_@SCL@_moddir}
+  %{?_@SCL@_contentdir:%global _httpd_contentdir %_@SCL@_contentdir}
+  %{?_@SCL@_modconfdir:%global _httpd_modconfdir %_@SCL@_modconfdir}
+  %{?_@SCL@_confdir:   %global _httpd_confdir    %_@SCL@_confdir}
+}

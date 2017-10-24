@@ -15,12 +15,13 @@
 Summary:       Package that installs %scl
 Name:          %scl_name
 Version:       1.1
-Release:       14%{?dist}
+Release:       18%{?dist}
 License:       GPLv2+
 Group: Applications/File
 Source0: README
 Source1: LICENSE
 Source2: README.7
+Source3: macros-build
 
 BuildRoot:     %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires: scl-utils-build
@@ -138,6 +139,11 @@ cat >> %{buildroot}%{_scl_scripts}/service-environment << EOF
 HTTPD24_HTTPD_SCLS_ENABLED="%{scl}"
 EOF
 
+# Add the scl_package_override macro
+sed -e 's/@SCL@/%{scl_name_base}%{scl_name_version}/g' %{SOURCE3} \
+   >>%{buildroot}%{_root_sysconfdir}/rpm/macros.%{scl}-config
+cat  %{buildroot}%{_root_sysconfdir}/rpm/macros.%{scl}-config
+
 %post runtime
 # Simple copy of context from system root to DSC root.
 # In case new version needs some additional rules or context definition,
@@ -170,6 +176,10 @@ restorecon -R %{_scl_root} >/dev/null 2>&1 || :
 %{_root_sysconfdir}/rpm/macros.%{scl_name_base}-scldevel
 
 %changelog
+* Tue Jun 06 2017 Luboš Uhliarik <luhliari@redhat.com> - 1.1-18
+- rebuild
+- Resolves: #1457316 - [RFE] please consider using scl_package_override
+
 * Fri May 06 2016 Jan Kaluza <jkaluza@redhat.com> - 1.1-14
 - Resolves:#1219112 - fix error in man page
 
